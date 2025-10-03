@@ -20,6 +20,11 @@
     "key:revoke": "node tools/cli/keys.js revoke",
     "limit:set": "node tools/cli/limits.js default report.query 5000",
     "backup": "node tools/cli/backup.js",
-    "import:csv": "node tools/cli/import_csv.js default sample.csv"
+    "import:csv": "node tools/cli/import_csv.js default sample.csv",
+    "start:web": "PORT=3002 node packages/web/server.js",
+    "start:slack": "PORT=3003 node packages/slack/app.js",
+    "start:stripe": "PORT=3012 node packages/stripe/server.js",
+    "ops:daemon": "bash tools/ops/daemon.sh",
+    "ops:cron": "bash tools/ops/cron.sh"
   }
 }
