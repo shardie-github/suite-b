@@ -1,16 +1,18 @@
 <!doctype html><html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Suite B — Reports</title>
+<link rel="manifest" href="/manifest.webmanifest">
 <style>
 :root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--b:#1a2642}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui}
 .wrap{max-width:1100px;margin:0 auto;padding:24px}
 h1{margin:0 0 12px} .bar{display:flex;gap:8px;flex-wrap:wrap}
-input,button,a.badge{padding:10px;border-radius:10px;border:1px solid var(--b);background:#0f182b;color:#e9eefb}
+input,button,a.badge,select{padding:10px;border-radius:10px;border:1px solid var(--b);background:#0f182b;color:#e9eefb}
 button{background:var(--acc);border:none;cursor:pointer}
 .card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px;margin-top:16px}
 table{width:100%;border-collapse:collapse}th,td{border-bottom:1px solid var(--b);padding:10px;text-align:left}
 a.badge{text-decoration:none;display:inline-block}
+.drop{border:2px dashed var(--b); border-radius:12px; padding:12px; text-align:center; margin-top:10px}
 @media(max-width:640px){.bar{flex-direction:column}}
 </style></head>
 <body>
@@ -21,26 +23,54 @@ a.badge{text-decoration:none;display:inline-block}
     <label>API key <input id="key" placeholder="paste key"></label>
     <label>From <input id="from" type="date"></label>
     <label>To <input id="to" type="date"></label>
+    <label>Sort
+      <select id="sort">
+        <option value="date:desc">date:desc</option>
+        <option value="date:asc">date:asc</option>
+        <option value="id:asc">id:asc</option>
+        <option value="id:desc">id:desc</option>
+      </select>
+    </label>
+    <label>Page <input id="page" type="number" value="1" min="1" style="width:90px"></label>
+    <label>Size <input id="size" type="number" value="50" min="1" max="500" style="width:90px"></label>
     <button id="go">Run</button>
     <a id="csv" class="badge" href="#" target="_blank">CSV</a>
     <a class="badge" href="/admin" aria-label="Admin">Admin</a>
   </div>
+  <div class="drop" id="drop">Drop CSV here to import (id,date,type,status,email)</div>
   <div class="card" aria-live="polite">
     <table><thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Status</th><th>Email</th></tr></thead><tbody id="rows"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+    <div id="meta" style="margin-top:8px;font-size:12px;opacity:.8"></div>
   </div>
 </div>
 <script>
 async function run(){
-  const t = document.getElementById('tenant').value||'default';
-  const k = document.getElementById('key').value||'';
-  const f = document.getElementById('from').value||'2025-01-01';
-  const to = document.getElementById('to').value||'2025-12-31';
+  const t = gv('tenant','default'), k = gv('key',''), f = gv('from','2025-01-01'), to = gv('to','2025-12-31');
+  const page=gv('page','1'), size=gv('size','50'), sort=gv('sort','date:desc');
   const headers = k? {'x-api-key':k,'x-tenant-id':t} : {};
-  const r = await fetch(`/api/reports?from=${f}&to=${to}`, {headers});
+  const r = await fetch(`/api/reports?from=${f}&to=${to}&page=${page}&size=${size}&sort=${sort}`, {headers});
   const j = await r.json().catch(()=>({rows:[]}));
   document.getElementById('rows').innerHTML = (j.rows||[]).map(x=>`<tr><td>${x.id}</td><td>${x.date}</td><td>${x.type}</td><td>${x.status}</td><td>${x.email||""}</td></tr>`).join('') || '<tr><td colspan="5">No rows.</td></tr>';
   document.getElementById('csv').href = `/api/reports.csv?from=${f}&to=${to}`;
+  document.getElementById('meta').textContent = `total=${j.total||0} page=${j.page||1} size=${j.size||50} usage=${(j.usage&&j.usage["report.query"])||0}`;
 }
+function gv(id,def){ const el=document.getElementById(id); return (el?.value||def); }
 document.getElementById('go').onclick = run; run();
+
+// CSV drop
+const drop=document.getElementById('drop');
+drop.addEventListener('dragover',e=>{e.preventDefault(); drop.style.opacity=.7;});
+drop.addEventListener('dragleave',e=>{drop.style.opacity=1;});
+drop.addEventListener('drop',async e=>{
+  e.preventDefault(); drop.style.opacity=1;
+  const f=e.dataTransfer.files[0]; if(!f) return;
+  const text=await f.text();
+  const t=gv('tenant','default'), k=gv('key','');
+  const res=await fetch('/api/import/csv',{method:'POST', headers:{'content-type':'text/csv','x-tenant-id':t,'x-api-key':k}, body:text});
+  const j=await res.json(); alert('Imported: '+(j.added||0)); run();
+});
+
+// PWA
+navigator.serviceWorker?.register('/sw.js').catch(()=>{});
 </script>
 </body></html>

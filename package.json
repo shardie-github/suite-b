@@ -14,6 +14,12 @@
     "dev": "tools/dev/up.sh",
     "stop": "tools/dev/down.sh",
     "tunnel": "tools/tunnel/tokenless.sh 3003",
-    "qa": "tools/qa/smoke.sh http://localhost:3002"
+    "qa": "tools/qa/smoke.sh http://localhost:3002",
+    "key:new": "node tools/cli/keys.js create demo",
+    "key:list": "node tools/cli/keys.js list",
+    "key:revoke": "node tools/cli/keys.js revoke",
+    "limit:set": "node tools/cli/limits.js default report.query 5000",
+    "backup": "node tools/cli/backup.js",
+    "import:csv": "node tools/cli/import_csv.js default sample.csv"
   }
 }

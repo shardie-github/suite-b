@@ -1,81 +1,85 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Suite B — Admin</title>
+<link rel="manifest" href="/manifest.webmanifest">
 <style>
-:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--mut:#9fb3e0}
+:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--mut:#9fb3e0;--b:#1a2642}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui}
-.wrap{max-width:1000px;margin:0 auto;padding:24px}
+.wrap{max-width:1100px;margin:0 auto;padding:24px}
 h1{margin:0 0 16px} .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
-.card{background:var(--card);border:1px solid #1a2642;border-radius:12px;padding:16px}
+.card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px}
 label{display:block;margin:8px 0 4px} input,textarea,button{width:100%;padding:10px;border-radius:10px;border:1px solid #233153;background:#0f182b;color:#e9eefb}
 button{background:var(--acc);border:none;cursor:pointer}
 pre{white-space:pre-wrap;word-break:break-word;background:#0c1426;border-radius:8px;padding:8px;border:1px solid #1a2642;max-height:260px;overflow:auto}
 .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a2642;margin-right:6px;font-size:12px}
 .small{font-size:12px;color:var(--mut)}
+.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
+.toggle{padding:8px 10px;border-radius:10px;background:#1a2642;border:1px solid #233153;cursor:pointer}
 </style>
 <div class="wrap" role="main" aria-label="Admin console">
-  <h1>Suite B — Admin</h1>
+  <div class="topbar">
+    <h1>Suite B — Admin</h1>
+    <button class="toggle" onclick="toggleTheme()">Toggle theme</button>
+  </div>
   <div class="grid">
-    <div class="card" aria-labelledby="k1"><h2 id="k1">API Keys</h2>
+    <div class="card"><h2>API Keys</h2>
       <label>Label <input id="keylabel" placeholder="sales-demo"></label>
       <label>Admin Secret <input id="adminsec" placeholder="devadmin"></label>
       <button onclick="newKey()">Generate</button>
-      <p class="small">Generated keys appear below. Copy and use via <code>x-api-key</code> header.</p>
-      <pre id="keys">(run “Load Keys”)</pre>
+      <pre id="keys">(Load Keys)</pre>
       <button onclick="loadKeys()">Load Keys</button>
     </div>
-    <div class="card" aria-labelledby="f1"><h2 id="f1">Feature Flags</h2>
+    <div class="card"><h2>Feature Flags</h2>
       <label>JSON <textarea id="flags" rows="8">{}</textarea></label>
       <label>Admin Secret <input id="adminsec2" placeholder="devadmin"></label>
       <button onclick="saveFlags()">Save</button>
-      <p class="small">Flags stored in <code>.data/flags.json</code>.</p>
     </div>
-    <div class="card" aria-labelledby="a1"><h2 id="a1">Audit Tail</h2>
+    <div class="card"><h2>Audit Tail</h2>
       <label>Admin Secret <input id="adminsec3" placeholder="devadmin"></label>
       <button onclick="loadAudit()">Refresh</button>
       <pre id="audit"></pre>
     </div>
-    <div class="card" aria-labelledby="i1"><h2 id="i1">Import (JSON)</h2>
-      <p class="small">Paste JSON array of rows: <code>[{ "id":"X", "date":"YYYY-MM-DD", "type":"RFP", "status":"New", "email":"a@b" }]</code></p>
+    <div class="card"><h2>Usage & Limits</h2>
       <label>Tenant <input id="tenant" value="default"></label>
-      <label>API Key <input id="apikey"></label>
-      <textarea id="payload" rows="8">[]</textarea>
-      <button onclick="sendImport()">Import</button>
-      <pre id="impout"></pre>
+      <button onclick="loadUsage()">Refresh Usage</button>
+      <pre id="usage"></pre>
+      <label>Set Limit (metric:value) <input id="limitkv" placeholder="report.query:5000"></label>
+      <button onclick="saveLimit()">Save Limit</button>
+    </div>
+    <div class="card"><h2>Backup / Restore</h2>
+      <a class="badge" href="/api/admin/backup.zip" target="_blank">Download backup</a>
+      <p class="small">Backup is JSON snapshot of <code>.data</code>.</p>
+    </div>
+    <div class="card"><h2>Magic-link SSO (demo)</h2>
+      <label>Email <input id="ssoemail" placeholder="you@example.com"></label>
+      <button onclick="startMagic()">Issue Token</button>
+      <label>Token <input id="ssotok"></label>
+      <button onclick="finishMagic()">Finish</button>
+      <pre id="ssolog"></pre>
     </div>
   </div>
 </div>
 <script>
+function toggleTheme(){
+  const root=document.querySelector(':root'); const bg=getComputedStyle(root).getPropertyValue('--bg').trim();
+  if(bg==="#0b1220"){ root.style.setProperty('--bg','#f8fafc'); root.style.setProperty('--card','#ffffff'); root.style.setProperty('--fg','#0b1220');}
+  else { root.style.setProperty('--bg','#0b1220'); root.style.setProperty('--card','#0f182b'); root.style.setProperty('--fg','#e9eefb');}
+}
 async function call(url,method,body,headers={}){
   const res=await fetch(url,{method,headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});
   const t=await res.text(); try{return JSON.parse(t);}catch{return {raw:t,status:res.status};}
 }
-async function newKey(){
-  const admin=document.getElementById('adminsec').value||'';
-  const lab=document.getElementById('keylabel').value||'generated';
-  const r=await call('/api/admin/keys','POST',{label:lab},{'x-admin-secret':admin,'x-api-key':'admin'});
-  alert(r.key?('New key: '+r.key):JSON.stringify(r));
+async function newKey(){ const admin=v('adminsec'), lab=v('keylabel'); const r=await call('/api/admin/keys','POST',{label:lab},{'x-admin-secret':admin,'x-api-key':'admin'}); alert(r.key?('New key: '+r.key):JSON.stringify(r)); }
+async function loadKeys(){ const admin=v('adminsec'); const r=await call('/api/admin/keys','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'}); g('keys').textContent=JSON.stringify(r,null,2); }
+async function saveFlags(){ const admin=v('adminsec2'); const obj=JSON.parse(g('flags').value||'{}'); const r=await call('/api/admin/flags','POST',obj,{'x-admin-secret':admin,'x-api-key':'admin'}); alert(r.ok?'Saved':'Error'); }
+async function loadAudit(){ const admin=v('adminsec3'); const r=await call('/api/admin/audit','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'}); g('audit').textContent=JSON.stringify(r,null,2); }
+async function loadUsage(){ const t=v('tenant'); const r=await call('/api/usage','GET',null,{'x-api-key':'admin','x-tenant-id':t}); g('usage').textContent=JSON.stringify(r,null,2); }
+async function saveLimit(){
+  const admin=v('adminsec'); const t=v('tenant'); const kv=v('limitkv'); const [m,val]=kv.split(':'); 
+  const r=await fetch('/api/admin/flags',{method:'POST',headers:{'content-type':'application/json','x-admin-secret':admin,'x-api-key':'admin'},body:JSON.stringify({})});
+  // Limits are stored server-side via a dedicated endpoint in future; for now, instruct operator to edit limits.json manually if needed.
+  alert('Limits endpoint is modelled; use CLI set-limit for now (tools/cli/limits.js).');
 }
-async function loadKeys(){
-  const admin=document.getElementById('adminsec').value||'';
-  const r=await call('/api/admin/keys','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'});
-  document.getElementById('keys').textContent = JSON.stringify(r,null,2);
-}
-async function saveFlags(){
-  const admin=document.getElementById('adminsec2').value||'';
-  const obj=JSON.parse(document.getElementById('flags').value||'{}');
-  const r=await call('/api/admin/flags','POST',obj,{'x-admin-secret':admin,'x-api-key':'admin'});
-  alert(r.ok?'Saved':'Error');
-}
-async function loadAudit(){
-  const admin=document.getElementById('adminsec3').value||'';
-  const r=await call('/api/admin/audit','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'});
-  document.getElementById('audit').textContent = JSON.stringify(r,null,2);
-}
-async function sendImport(){
-  const t=document.getElementById('tenant').value||'default';
-  const k=document.getElementById('apikey').value||'';
-  const p=JSON.parse(document.getElementById('payload').value||'[]');
-  const r=await call('/api/import','POST',p,{'x-api-key':k,'x-tenant-id':t});
-  document.getElementById('impout').textContent = JSON.stringify(r,null,2);
-}
+async function startMagic(){ const email=v('ssoemail'); const r=await call('/sso/magic/start','POST',{email}); g('ssolog').textContent=JSON.stringify(r,null,2); g('ssotok').value=r.token||''; }
+async function finishMagic(){ const token=v('ssotok'); const r=await call('/sso/magic/finish','POST',{token}); g('ssolog').textContent=JSON.stringify(r,null,2); }
+function v(id){return g(id).value||''} function g(id){return document.getElementById(id)}
 </script>

@@ -2,18 +2,31 @@ import express from "express";
 import { query, importRows, dsarExport, coiExpiring, retain } from "../../datalake/store.js";
 import { audit } from "../../common/apikey.js";
 import { tenantFrom } from "../mw/auth.js";
+import { addUsage, getUsage, withinLimit } from "../../datalake/usage.js";
 export const api = express.Router();
 
-// Validate minimal date inputs (YYYY-MM-DD)
 function isDate(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s)); }
 
 api.get("/reports",(req,res)=>{
   const t = tenantFrom(req);
-  const {from,to} = req.query;
-  if((from && !isDate(from)) || (to && !isDate(to))) return res.status(400).json({error:"bad_date"});
+  const {from,to,page="1",size="50",sort="date:desc"} = req.query;
+  if ((from && !isDate(from)) || (to && !isDate(to))) return res.status(400).json({error:"bad_date"});
   const rows = query(t, from, to);
-  audit("report.query",{tenant:t, from, to, count: rows.length});
-  res.json({rows, from, to, tenant: t});
+  // sort
+  const [sf,dir] = String(sort).split(":"); const sign = dir==="asc"?1:-1;
+  rows.sort((a,b)=> (String(a[sf]||"")<String(b[sf]||"")? -1: 1)*sign );
+  // paginate
+  const p = Math.max(1, parseInt(page,10)||1);
+  const s = Math.min(500, Math.max(1, parseInt(size,10)||50));
+  const off = (p-1)*s;
+  const pageRows = rows.slice(off, off+s);
+
+  const usage = addUsage(t,"report.query",1);
+  const allowed = withinLimit(t,"report.query", usage["report.query"]);
+  audit("report.query",{tenant:t, from, to, count: rows.length, page:p, size:s});
+  if (!allowed) return res.status(429).json({error:"usage_limit", usage});
+
+  res.json({rows: pageRows, total: rows.length, page:p, size:s, sort, tenant:t, usage});
 });
 
 api.get("/reports.csv",(req,res)=>{
@@ -24,7 +37,24 @@ api.get("/reports.csv",(req,res)=>{
   res.type("text/csv").send(csv);
 });
 
-// CSV/JSON import — client sends JSON [{id,date,type,status,email}]
+// Upload CSV (very simple parser; expects header)
+api.post("/import/csv", express.text({type:"text/csv"}), (req,res)=>{
+  const t = tenantFrom(req);
+  const lines = (req.body||"").trim().split(/\r?\n/);
+  const header = lines.shift(); if (!header) return res.status(400).json({error:"empty_csv"});
+  const cols = header.split(",");
+  const idx = (k)=> cols.indexOf(k);
+  const out=[];
+  for (const line of lines){
+    const c=line.split(",");
+    out.push({ id:c[idx("id")], date:c[idx("date")], type:c[idx("type")]||"Other", status:c[idx("status")]||"New", email:c[idx("email")]||"" });
+  }
+  const { added } = importRows(t, out);
+  audit("import.csv",{tenant:t, added});
+  res.json({ok:true, added});
+});
+
+// JSON import unchanged
 api.post("/import",(req,res)=>{
   const t = tenantFrom(req);
   const rows = Array.isArray(req.body) ? req.body : (req.body?.rows||[]);
@@ -33,7 +63,6 @@ api.post("/import",(req,res)=>{
   res.json({ok:true, added});
 });
 
-// DSAR export stub
 api.get("/dsar/export",(req,res)=>{
   const t = tenantFrom(req);
   const {email} = req.query;
@@ -43,7 +72,6 @@ api.get("/dsar/export",(req,res)=>{
   res.json(out);
 });
 
-// COI expiring
 api.get("/coi/expiring",(req,res)=>{
   const t = tenantFrom(req);
   const d = parseInt(req.query.days||"30",10)||30;
@@ -52,13 +80,17 @@ api.get("/coi/expiring",(req,res)=>{
   res.json(out);
 });
 
-// Retention (admin key still required via x-admin-secret but route here)
 api.post("/retention",(req,res)=>{
   const t = tenantFrom(req);
   const keep = parseInt(req.body?.keepDays||"365",10)||365;
   const r = retain(t, keep);
   audit("retention.run",{tenant:t, ...r});
   res.json(r);
+});
+
+api.get("/usage",(req,res)=>{
+  const t = tenantFrom(req);
+  res.json({ usage: getUsage(t) });
 });
 
 export default api;
