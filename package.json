@@ -8,5 +8,12 @@
     "packages/stripe",
     "packages/datalake",
     "packages/integrations/*"
-  ]
+  ],
+  "type": "module",
+  "scripts": {
+    "dev": "tools/dev/up.sh",
+    "stop": "tools/dev/down.sh",
+    "tunnel": "tools/tunnel/tokenless.sh 3003",
+    "qa": "tools/qa/smoke.sh http://localhost:3002"
+  }
 }
