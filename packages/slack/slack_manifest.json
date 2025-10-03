@@ -1,11 +1,11 @@
 {
-  "display_information": { "name": "Suite B Bot" },
-  "features": {
-    "bot_user": { "display_name": "Suite B", "always_online": false },
-    "slash_commands": [
-      { "command": "/report", "url": "https://24024e55c3f266.lhr.life/slack/commands", "description": "Get a Suite B report", "should_escape": false }
+  "display_information" { "name" "Suite B Bot" },
+  "features" {
+    "bot_user" { "display_name" "Suite B", "always_online" false },
+    "slash_commands" [
+      { "command" "/report", "url" "https//24024e55c3f266.lhr.life/slack/commands", "description" "Get a Suite B report", "should_escape" false }
     ]
   },
-  "oauth_config": { "scopes": { "bot": ["commands","chat:write"] } },
-  "settings": { "event_subscriptions": { "request_url": "https://24024e55c3f266.lhr.life/slack/events", "bot_events": [] } }
+  "oauth_config" { "scopes" { "bot" ["commands","chatwrite"] } },
+  "settings" { "event_subscriptions" { "request_url" "https//24024e55c3f266.lhr.life/slack/events", "bot_events" [] } }
 }

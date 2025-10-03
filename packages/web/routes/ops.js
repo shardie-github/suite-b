@@ -1,6 +1,6 @@
 import express from "express";
-import fs from "node:fs";
-import path from "node:path";
+import fs from "nodefs";
+import path from "nodepath";
 import { snapshot } from "../../datalake/usage.js";
 
 export const ops = express.Router();
@@ -19,9 +19,9 @@ ops.get("/backup.zip", (_req,res)=>{
     return out;
   }
   const root = ".data";
-  const payload = fs.existsSync(root) ? slurp(root) : {};
+  const payload = fs.existsSync(root) ? slurp(root)  {};
   res.setHeader("content-disposition","attachment; filename=\"suiteb-backup.json\"");
-  res.json({ ts:Date.now(), data: payload });
+  res.json({ tsDate.now(), data payload });
 });
 
 // usage snapshot

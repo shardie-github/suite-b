@@ -1,15 +1,15 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Suite B — Admin</title><link rel="manifest" href="/manifest.webmanifest">
 <style>
-:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--b:#1a2642}
-*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui}
-.wrap{max-width:1100px;margin:0 auto;padding:24px}
-h1{margin:0 0 16px} .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
-.card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px}
-label{display:block;margin:8px 0 4px} input,textarea,button{width:100%;padding:10px;border-radius:10px;border:1px solid #233153;background:#0f182b;color:#e9eefb}
-button{background:var(--acc);border:none;cursor:pointer} pre{white-space:pre-wrap;word-break:break-word;background:#0c1426;border-radius:8px;padding:8px;border:1px solid #1a2642;max-height:260px;overflow:auto}
-.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a2642;margin-right:6px;font-size:12px}
-.small{font-size:12px;opacity:.75}
+root{--bg#0b1220;--card#0f182b;--fg#e9eefb;--acc#5b8cff;--b#1a2642}
+*{box-sizingborder-box} body{margin0;backgroundvar(--bg);colorvar(--fg);font-familysystem-ui}
+.wrap{max-width1100px;margin0 auto;padding24px}
+h1{margin0 0 16px} .grid{displaygrid;gap16px;grid-template-columnsrepeat(auto-fit,minmax(320px,1fr))}
+.card{backgroundvar(--card);border1px solid var(--b);border-radius12px;padding16px}
+label{displayblock;margin8px 0 4px} input,textarea,button{width100%;padding10px;border-radius10px;border1px solid #233153;background#0f182b;color#e9eefb}
+button{backgroundvar(--acc);bordernone;cursorpointer} pre{white-spacepre-wrap;word-breakbreak-word;background#0c1426;border-radius8px;padding8px;border1px solid #1a2642;max-height260px;overflowauto}
+.badge{displayinline-block;padding4px 8px;border-radius999px;background#1a2642;margin-right6px;font-size12px}
+.small{font-size12px;opacity.75}
 </style>
 <div class="wrap">
   <h1>Suite B — Admin</h1>
@@ -24,7 +24,7 @@ button{background:var(--acc);border:none;cursor:pointer} pre{white-space:pre-wra
         </select>
       </label>
       <label>Tenant <input id="tenant" value="default"></label>
-      <label>Args (JSON) <textarea id="args" rows="5">{"from":"2025-01-01","to":"2025-12-31"}</textarea></label>
+      <label>Args (JSON) <textarea id="args" rows="5">{"from""2025-01-01","to""2025-12-31"}</textarea></label>
       <label>Every (ms) <input id="every" value="3600000"></label>
       <button onclick="create()">Create / Upsert</button>
       <pre id="jobs"></pre>
@@ -39,13 +39,13 @@ button{background:var(--acc);border:none;cursor:pointer} pre{white-space:pre-wra
   </div>
 </div>
 <script>
-async function jget(u){ const r=await fetch(u,{headers:{'x-api-key':'admin'}}); return r.json(); }
-async function jpost(u,b){ const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json','x-api-key':'admin'},body:JSON.stringify(b)}); return r.json();}
-async function jdel(u){ const r=await fetch(u,{method:'DELETE',headers:{'x-api-key':'admin'}}); return r.json();}
+async function jget(u){ const r=await fetch(u,{headers{'x-api-key''admin'}}); return r.json(); }
+async function jpost(u,b){ const r=await fetch(u,{method'POST',headers{'content-type''application/json','x-api-key''admin'},bodyJSON.stringify(b)}); return r.json();}
+async function jdel(u){ const r=await fetch(u,{method'DELETE',headers{'x-api-key''admin'}}); return r.json();}
 
 async function load(){ const j=await jget('/api/admin/schedules'); g('jobs').textContent=JSON.stringify(j,null,2); }
 async function create(){
-  const body={kind:v('kind'),tenant:v('tenant'),args:JSON.parse(v('args')||'{}'),everyMs:v('every')};
+  const body={kindv('kind'),tenantv('tenant'),argsJSON.parse(v('args')||'{}'),everyMsv('every')};
   const r=await jpost('/api/admin/schedules', body); alert(r.id||JSON.stringify(r)); load();
 }
 async function rotate(){ const r=await jpost('/api/admin/audit/rotate',{}); g('ops').textContent=JSON.stringify(r,null,2); }

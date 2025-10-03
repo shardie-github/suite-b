@@ -1,5 +1,5 @@
-import crypto from "node:crypto";
-import fs from "node:fs";
+import crypto from "nodecrypto";
+import fs from "nodefs";
 const VAULT = ".env.vault";
 export function loadVault(pass){
   if (!fs.existsSync(VAULT)) return {};

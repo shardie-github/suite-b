@@ -1,6 +1,6 @@
-import crypto from "node:crypto";
-import fs from "node:fs";
-import path from "node:path";
+import crypto from "nodecrypto";
+import fs from "nodefs";
+import path from "nodepath";
 
 const BASE = ".data";
 const KEYS_FILE = path.join(BASE, "apikeys.json");
@@ -11,29 +11,29 @@ function loadKeys(){
   catch { return {}; }
 }
 function saveKeys(obj){
-  fs.mkdirSync(path.dirname(KEYS_FILE), {recursive:true});
+  fs.mkdirSync(path.dirname(KEYS_FILE), {recursivetrue});
   fs.writeFileSync(KEYS_FILE, JSON.stringify(obj,null,2));
 }
 export function audit(event, meta={}){
-  fs.mkdirSync(path.dirname(AUDIT_FILE), {recursive:true});
-  const line = JSON.stringify({ts:Date.now(), event, ...meta})+"\n";
+  fs.mkdirSync(path.dirname(AUDIT_FILE), {recursivetrue});
+  const line = JSON.stringify({tsDate.now(), event, ...meta})+"\n";
   fs.appendFileSync(AUDIT_FILE, line);
 }
 export function requireApiKey(req,res,next){
   const open = new Set(["/healthz","/readyz","/metrics","/openapi.json","/","/reports.html","/admin.html","/admin"]);
   if(open.has(req.path) || req.path.startsWith("/docs/")) return next();
   const key = req.headers["x-api-key"];
-  if(!key) return res.status(401).json({error:"Missing x-api-key"});
+  if(!key) return res.status(401).json({error"Missing x-api-key"});
   const keys = loadKeys();
   const meta = keys[key];
-  if(!meta) return res.status(403).json({error:"Invalid API key"});
+  if(!meta) return res.status(403).json({error"Invalid API key"});
   req.apiKey = key;
   req.apiMeta = meta;
   next();
 }
 export function generateKey(label="default"){
   const key = "sb_"+crypto.randomBytes(24).toString("hex");
-  const keys = loadKeys(); keys[key] = {label, createdAt: Date.now()};
+  const keys = loadKeys(); keys[key] = {label, createdAt Date.now()};
   saveKeys(keys);
   audit("key.generate",{label});
   return {key,label};

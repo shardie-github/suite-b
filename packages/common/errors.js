@@ -3,6 +3,6 @@ export class HttpError extends Error{
 }
 export const onError = (err, _req, res, _next)=>{
   const status = err.status || 500;
-  const body = { error: err.message || "Server error" };
+  const body = { error err.message || "Server error" };
   res.status(status).json(body);
 };

@@ -1,11 +1,11 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Suite B — ROI</title>
-<style>body{font-family:system-ui;margin:0;background:#0b1220;color:#e9eefb}.wrap{max-width:920px;margin:0 auto;padding:24px}
-label{display:block;margin:8px 0 4px}input,button{width:100%;padding:10px;border-radius:10px;border:1px solid #233153;background:#0f182b;color:#e9eefb}button{background:#5b8cff;border:none;margin-top:8px}</style>
+<style>body{font-familysystem-ui;margin0;background#0b1220;color#e9eefb}.wrap{max-width920px;margin0 auto;padding24px}
+label{displayblock;margin8px 0 4px}input,button{width100%;padding10px;border-radius10px;border1px solid #233153;background#0f182b;color#e9eefb}button{background#5b8cff;bordernone;margin-top8px}</style>
 <div class="wrap"><h1>ROI Calculator</h1>
 <label>Manual hours saved / month <input id="hrs" value="20"></label>
 <label>Hourly cost $<input id="rate" value="60"></label>
 <label>Subscription $/mo <input id="sub" value="79"></label>
 <button onclick="calc()">Calculate</button>
 <pre id="out"></pre></div>
-<script>function calc(){const h=+hrs.value||0,r=+rate.value||0,s=+sub.value||0; const v=h*r-s; out.textContent="Monthly ROI: $"+v.toFixed(2);}</script>
+<script>function calc(){const h=+hrs.value||0,r=+rate.value||0,s=+sub.value||0; const v=h*r-s; out.textContent="Monthly ROI $"+v.toFixed(2);}</script>
