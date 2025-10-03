@@ -1,4 +1,7 @@
 import express from "express";
+import fs from "node:fs";
+import path from "node:path";
+import { allowJobCount } from "../../stripe/tiers.js";
 import crypto from "node:crypto";
 import { list, put, del, runNow } from "../scheduler.js";
 export const schedule = express.Router();
@@ -11,6 +14,10 @@ schedule.post("/",(req,res)=>{
     args: body.args || {}, everyMs: String(body.everyMs||"3600000"), enabled: body.enabled!==false
   };
   if (!job.kind) return res.status(400).json({error:"kind_required"});
+  // tier enforcement
+  const ROOT = ".data"; const SFILE = path.join(ROOT, "schedules.json");
+  let current=0; try{ current=(JSON.parse(fs.readFileSync(SFILE,'utf8')).jobs||[]).filter(j=>j.tenant===job.tenant).length; }catch{}
+  if (!allowJobCount(job.tenant, current)) return res.status(402).json({error:"upgrade_required"});
   res.json(put(job));
 });
 schedule.post("/:id/run",(req,res)=> res.json(runNow(req.params.id)));

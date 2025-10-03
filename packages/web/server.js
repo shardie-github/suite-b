@@ -6,6 +6,8 @@ import cors from "cors";
 import rateLimit from "express-rate-limit";
 import { cfg, } from "../common/config.js";
 import api from "./routes/api.js";
+import dsar from "./routes/dsar.js";
+import { strictHeaders } from "./mw/security.js";
 import admin from "./routes/admin.js";
 import ops from "./routes/ops.js";
 import sso from "./routes/sso.js";
@@ -16,7 +18,7 @@ import { init, seed } from "../datalake/store.js";
 import { startLoop } from "./scheduler.js";
 
 const __filename = fileURLToPath(import.meta.url); const __dirname = path.dirname(__filename);
-const app = express(); const C = cfg();
+const app = express(); app.use(strictHeaders); const C = cfg();
 
 app.disable("x-powered-by");
 app.use(helmet({
@@ -68,12 +70,15 @@ app.get("/openapi.json",(_req,res)=>res.json({
 }));
 
 // Protect /api & /api/admin
+app.use("/api/dsar", requireApiKey, dsar);
 app.use("/api", requireApiKey, api);
 app.use("/api/admin", requireApiKey, ops, admin);
 
 // Static
 app.use(express.static(path.join(__dirname,"public")));
 app.get("/",(_req,res)=>res.redirect("/reports.html"));
+app.get("/dashboard.html",(_req,res)=>res.sendFile(require("node:path").join(__dirname,"public","dashboard.html")));
+app.get("/roi.html",(_req,res)=>res.sendFile(require("node:path").join(__dirname,"public","roi.html")));
 app.get("/admin",(_req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 
 app.listen(process.env.PORT||3002, ()=>console.log("Suite B web on :"+(process.env.PORT||3002)));

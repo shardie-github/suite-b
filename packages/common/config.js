@@ -1,15 +1,9 @@
-/** Lightweight config validation + defaults (pure JS) */
-export function cfg() {
-  const c = {
-    ADMIN_SECRET: process.env.ADMIN_SECRET || "devadmin",
-    DATA_ENC_KEY: process.env.DATA_ENC_KEY || "", // hex(64) recommended
-    SLACK_ALERT_URL: process.env.SLACK_ALERT_URL || "", // optional
-    RATE_PER_MIN: parseInt(process.env.RATE_PER_MIN || "400", 10),
-    BILLING_ENABLED: (process.env.BILLING_ENABLED || "false").toLowerCase() === "true",
-    MAGIC_FROM: process.env.MAGIC_FROM || "noreply@suiteb.local"
+import { loadVault, overlayEnv } from "./vault.js";
+export function cfg(){
+  if (process.env.ENV_VAULT_PASS) overlayEnv(loadVault(process.env.ENV_VAULT_PASS));
+  return {
+    RATE_PER_MIN: parseInt(process.env.RATE_PER_MIN||"300",10),
+    OFFSITE_URL: process.env.OFFSITE_URL||"",
+    OFFSITE_TOKEN: process.env.OFFSITE_TOKEN||""
   };
-  // Soft validations:
-  if (c.ADMIN_SECRET === "devadmin") console.warn("[cfg] ADMIN_SECRET=devadmin (change in prod)");
-  if (c.DATA_ENC_KEY && c.DATA_ENC_KEY.length !== 64) console.warn("[cfg] DATA_ENC_KEY length should be 64 hex chars");
-  return c;
 }

@@ -1,5 +1,7 @@
 import express from "express";
-const app = express(); app.use(express.json());
+import { approvals } from "./approvals.js";
+import express from "express";
+const app = express(); app.use("/slack", approvals); app.use(express.json());
 app.get("/healthz", (_req,res)=>res.send("ok"));
 app.post("/slack/commands", (req,res)=>{
   const text=(req.body&&req.body.text)||"";
@@ -10,3 +12,4 @@ app.post("/slack/commands", (req,res)=>{
 });
 const port = process.env.PORT || 3003;
 app.listen(port, ()=>console.log("Suite B Slack bot on :"+port));
+
