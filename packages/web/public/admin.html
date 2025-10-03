@@ -1,85 +1,55 @@
 <!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Suite B — Admin</title>
-<link rel="manifest" href="/manifest.webmanifest">
+<title>Suite B — Admin</title><link rel="manifest" href="/manifest.webmanifest">
 <style>
-:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--mut:#9fb3e0;--b:#1a2642}
+:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--b:#1a2642}
 *{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui}
 .wrap{max-width:1100px;margin:0 auto;padding:24px}
-h1{margin:0 0 16px} .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+h1{margin:0 0 16px} .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(320px,1fr))}
 .card{background:var(--card);border:1px solid var(--b);border-radius:12px;padding:16px}
 label{display:block;margin:8px 0 4px} input,textarea,button{width:100%;padding:10px;border-radius:10px;border:1px solid #233153;background:#0f182b;color:#e9eefb}
-button{background:var(--acc);border:none;cursor:pointer}
-pre{white-space:pre-wrap;word-break:break-word;background:#0c1426;border-radius:8px;padding:8px;border:1px solid #1a2642;max-height:260px;overflow:auto}
+button{background:var(--acc);border:none;cursor:pointer} pre{white-space:pre-wrap;word-break:break-word;background:#0c1426;border-radius:8px;padding:8px;border:1px solid #1a2642;max-height:260px;overflow:auto}
 .badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a2642;margin-right:6px;font-size:12px}
-.small{font-size:12px;color:var(--mut)}
-.topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:10px}
-.toggle{padding:8px 10px;border-radius:10px;background:#1a2642;border:1px solid #233153;cursor:pointer}
+.small{font-size:12px;opacity:.75}
 </style>
-<div class="wrap" role="main" aria-label="Admin console">
-  <div class="topbar">
-    <h1>Suite B — Admin</h1>
-    <button class="toggle" onclick="toggleTheme()">Toggle theme</button>
-  </div>
+<div class="wrap">
+  <h1>Suite B — Admin</h1>
   <div class="grid">
-    <div class="card"><h2>API Keys</h2>
-      <label>Label <input id="keylabel" placeholder="sales-demo"></label>
-      <label>Admin Secret <input id="adminsec" placeholder="devadmin"></label>
-      <button onclick="newKey()">Generate</button>
-      <pre id="keys">(Load Keys)</pre>
-      <button onclick="loadKeys()">Load Keys</button>
-    </div>
-    <div class="card"><h2>Feature Flags</h2>
-      <label>JSON <textarea id="flags" rows="8">{}</textarea></label>
-      <label>Admin Secret <input id="adminsec2" placeholder="devadmin"></label>
-      <button onclick="saveFlags()">Save</button>
-    </div>
-    <div class="card"><h2>Audit Tail</h2>
-      <label>Admin Secret <input id="adminsec3" placeholder="devadmin"></label>
-      <button onclick="loadAudit()">Refresh</button>
-      <pre id="audit"></pre>
-    </div>
-    <div class="card"><h2>Usage & Limits</h2>
+    <div class="card"><h2>Schedules</h2>
+      <label>Kind
+        <select id="kind">
+          <option value="report.csv">report.csv</option>
+          <option value="dsar.export">dsar.export</option>
+          <option value="retention.run">retention.run</option>
+          <option value="slack.alert">slack.alert</option>
+        </select>
+      </label>
       <label>Tenant <input id="tenant" value="default"></label>
-      <button onclick="loadUsage()">Refresh Usage</button>
-      <pre id="usage"></pre>
-      <label>Set Limit (metric:value) <input id="limitkv" placeholder="report.query:5000"></label>
-      <button onclick="saveLimit()">Save Limit</button>
+      <label>Args (JSON) <textarea id="args" rows="5">{"from":"2025-01-01","to":"2025-12-31"}</textarea></label>
+      <label>Every (ms) <input id="every" value="3600000"></label>
+      <button onclick="create()">Create / Upsert</button>
+      <pre id="jobs"></pre>
+      <div class="small">Use “Run” to execute immediately.</div>
     </div>
-    <div class="card"><h2>Backup / Restore</h2>
-      <a class="badge" href="/api/admin/backup.zip" target="_blank">Download backup</a>
-      <p class="small">Backup is JSON snapshot of <code>.data</code>.</p>
-    </div>
-    <div class="card"><h2>Magic-link SSO (demo)</h2>
-      <label>Email <input id="ssoemail" placeholder="you@example.com"></label>
-      <button onclick="startMagic()">Issue Token</button>
-      <label>Token <input id="ssotok"></label>
-      <button onclick="finishMagic()">Finish</button>
-      <pre id="ssolog"></pre>
+    <div class="card"><h2>Ops</h2>
+      <a class="badge" href="/api/admin/backup.zip" target="_blank">Backup .data</a>
+      <button onclick="rotate()">Rotate audit</button>
+      <button onclick="errorBudget()">Error budget</button>
+      <pre id="ops"></pre>
     </div>
   </div>
 </div>
 <script>
-function toggleTheme(){
-  const root=document.querySelector(':root'); const bg=getComputedStyle(root).getPropertyValue('--bg').trim();
-  if(bg==="#0b1220"){ root.style.setProperty('--bg','#f8fafc'); root.style.setProperty('--card','#ffffff'); root.style.setProperty('--fg','#0b1220');}
-  else { root.style.setProperty('--bg','#0b1220'); root.style.setProperty('--card','#0f182b'); root.style.setProperty('--fg','#e9eefb');}
+async function jget(u){ const r=await fetch(u,{headers:{'x-api-key':'admin'}}); return r.json(); }
+async function jpost(u,b){ const r=await fetch(u,{method:'POST',headers:{'content-type':'application/json','x-api-key':'admin'},body:JSON.stringify(b)}); return r.json();}
+async function jdel(u){ const r=await fetch(u,{method:'DELETE',headers:{'x-api-key':'admin'}}); return r.json();}
+
+async function load(){ const j=await jget('/api/admin/schedules'); g('jobs').textContent=JSON.stringify(j,null,2); }
+async function create(){
+  const body={kind:v('kind'),tenant:v('tenant'),args:JSON.parse(v('args')||'{}'),everyMs:v('every')};
+  const r=await jpost('/api/admin/schedules', body); alert(r.id||JSON.stringify(r)); load();
 }
-async function call(url,method,body,headers={}){
-  const res=await fetch(url,{method,headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});
-  const t=await res.text(); try{return JSON.parse(t);}catch{return {raw:t,status:res.status};}
-}
-async function newKey(){ const admin=v('adminsec'), lab=v('keylabel'); const r=await call('/api/admin/keys','POST',{label:lab},{'x-admin-secret':admin,'x-api-key':'admin'}); alert(r.key?('New key: '+r.key):JSON.stringify(r)); }
-async function loadKeys(){ const admin=v('adminsec'); const r=await call('/api/admin/keys','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'}); g('keys').textContent=JSON.stringify(r,null,2); }
-async function saveFlags(){ const admin=v('adminsec2'); const obj=JSON.parse(g('flags').value||'{}'); const r=await call('/api/admin/flags','POST',obj,{'x-admin-secret':admin,'x-api-key':'admin'}); alert(r.ok?'Saved':'Error'); }
-async function loadAudit(){ const admin=v('adminsec3'); const r=await call('/api/admin/audit','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'}); g('audit').textContent=JSON.stringify(r,null,2); }
-async function loadUsage(){ const t=v('tenant'); const r=await call('/api/usage','GET',null,{'x-api-key':'admin','x-tenant-id':t}); g('usage').textContent=JSON.stringify(r,null,2); }
-async function saveLimit(){
-  const admin=v('adminsec'); const t=v('tenant'); const kv=v('limitkv'); const [m,val]=kv.split(':'); 
-  const r=await fetch('/api/admin/flags',{method:'POST',headers:{'content-type':'application/json','x-admin-secret':admin,'x-api-key':'admin'},body:JSON.stringify({})});
-  // Limits are stored server-side via a dedicated endpoint in future; for now, instruct operator to edit limits.json manually if needed.
-  alert('Limits endpoint is modelled; use CLI set-limit for now (tools/cli/limits.js).');
-}
-async function startMagic(){ const email=v('ssoemail'); const r=await call('/sso/magic/start','POST',{email}); g('ssolog').textContent=JSON.stringify(r,null,2); g('ssotok').value=r.token||''; }
-async function finishMagic(){ const token=v('ssotok'); const r=await call('/sso/magic/finish','POST',{token}); g('ssolog').textContent=JSON.stringify(r,null,2); }
+async function rotate(){ const r=await jpost('/api/admin/audit/rotate',{}); g('ops').textContent=JSON.stringify(r,null,2); }
+async function errorBudget(){ const r=await jget('/api/admin/errorbudget'); g('ops').textContent=JSON.stringify(r,null,2); }
 function v(id){return g(id).value||''} function g(id){return document.getElementById(id)}
+load();
 </script>

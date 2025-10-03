@@ -1,14 +1,21 @@
 import express from "express";
-import { generateKey, listKeys, revokeKey, tailAudit } from "../../common/apikey.js";
-import { setFlags } from "../../datalake/store.js";
+import fs from "node:fs";
+import path from "node:path";
+import schedule from "./schedule.js";
+import { errorBudget } from "../../common/crypto.js";
 export const admin = express.Router();
+admin.use("/schedules", schedule);
 
-function isAdmin(req){ return (process.env.ADMIN_SECRET||"devadmin") === (req.headers["x-admin-secret"]||""); }
-
-admin.get("/keys",(req,res)=>{ if(!isAdmin(req)) return res.status(403).json({error:"admin"}); res.json(listKeys()); });
-admin.post("/keys",(req,res)=>{ if(!isAdmin(req)) return res.status(403).json({error:"admin"}); res.json(generateKey(req.body?.label||"generated")); });
-admin.delete("/keys/:key",(req,res)=>{ if(!isAdmin(req)) return res.status(403).json({error:"admin"}); revokeKey(req.params.key); res.json({ok:true}); });
-admin.post("/flags",(req,res)=>{ if(!isAdmin(req)) return res.status(403).json({error:"admin"}); setFlags(req.body||{}); res.json({ok:true}); });
-admin.get("/audit",(req,res)=>{ if(!isAdmin(req)) return res.status(403).json({error:"admin"}); res.json(tailAudit(200)); });
-
+admin.post("/audit/rotate",(_req,res)=>{
+  try {
+    const p = path.join(".data","audit.jsonl");
+    if (fs.existsSync(p)) {
+      const dest = path.join(".data","backups","audit_"+Date.now()+".jsonl");
+      fs.mkdirSync(path.dirname(dest),{recursive:true});
+      fs.renameSync(p,dest);
+    }
+    res.json({ok:true});
+  } catch(e) { res.status(500).json({error:String(e?.message||e)}); }
+});
+admin.get("/errorbudget",(_req,res)=> res.json({allowed:errorBudget.allowed, errors:errorBudget.errors}));
 export default admin;
