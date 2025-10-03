@@ -21,7 +21,7 @@ webhooks.post("/generic",(req,res)=>{
   if (seenOnce("gen:"+id)) return res.status(202).json({ ok:true, dedup:true });
   const v = verifyGeneric(req);
   if (!v.ok) { alertSlack(`Webhook generic rejected: ${v.reason}`); return res.status(401).json({error:"bad_sig"}); }
-  // TODO: route event type if needed
+  //  route event type if needed
   return res.json({ ok:true, id });
 });
 

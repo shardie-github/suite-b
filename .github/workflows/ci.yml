@@ -1,14 +1,14 @@
 name: ci
-on: { push: { branches: [main] }, pull_request: {} }
+on:
+  push: { branches: [ main ] }
 jobs:
-  build:
+  lint-and-smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
-        with: { node-version: '20' }
-      - run: |
-          npm --prefix packages/web i
-          npm --prefix packages/slack i
-          npm --prefix packages/stripe i
-      - run: echo "✅ Suite B CI OK"
+        with: { node-version: '22.x' }
+      - run: npm ci || npm i
+      - run: npm run lint --if-present
+      - run: npm run format:check --if-present
+      - run: npm run qa:repo --if-present

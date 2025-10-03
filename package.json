@@ -25,6 +25,22 @@
     "start:slack": "PORT=3003 node packages/slack/app.js",
     "start:stripe": "PORT=3012 node packages/stripe/server.js",
     "ops:daemon": "bash tools/ops/daemon.sh",
-    "ops:cron": "bash tools/ops/cron.sh"
+    "ops:cron": "bash tools/ops/cron.sh",
+    "lint": "npx -y eslint .",
+    "format": "npx -y prettier --write .",
+    "format:check": "npx -y prettier --check .",
+    "md:lint": "npx -y markdownlint-cli '**/*.md' -i node_modules -i .data -i dist -i logs",
+    "spell": "npx -y cspell '**/*' --no-must-find-files",
+    "qa:repo": "npm run md:lint && npm run spell",
+    "qa:smoke": "bash tools/qa/smoke.sh http://localhost:3002"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "cspell": "^8.14.2",
+    "eslint": "^8.57.0",
+    "markdownlint-cli": "^0.41.0",
+    "prettier": "^3.3.3"
   }
 }

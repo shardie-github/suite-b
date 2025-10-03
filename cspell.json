@@ -1,0 +1,6 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "words": ["Hardonia","multitenant","webhook","healthz","readyz","DSAR","roi","tmux","suiteb","MinIO","cronjob"],
+  "ignorePaths": ["**/node_modules/**","**/.data/**","**/dist/**","**/logs/**"]
+}
