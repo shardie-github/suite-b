@@ -3,9 +3,9 @@
   "features": {
     "bot_user": { "display_name": "Suite B", "always_online": false },
     "slash_commands": [
-      { "command": "/report", "url": "https://EXAMPLE_TUNNEL/slack/commands", "description": "Get a Suite B report", "should_escape": false }
+      { "command": "/report", "url": "https://24024e55c3f266.lhr.life/slack/commands", "description": "Get a Suite B report", "should_escape": false }
     ]
   },
   "oauth_config": { "scopes": { "bot": ["commands","chat:write"] } },
-  "settings": { "event_subscriptions": { "request_url": "https://EXAMPLE_TUNNEL/slack/events", "bot_events": [] } }
+  "settings": { "event_subscriptions": { "request_url": "https://24024e55c3f266.lhr.life/slack/events", "bot_events": [] } }
 }
