@@ -1,0 +1,11 @@
+{
+  "display_information": { "name": "Suite B Bot" },
+  "features": {
+    "bot_user": { "display_name": "Suite B", "always_online": false },
+    "slash_commands": [
+      { "command": "/report", "url": "https://EXAMPLE_TUNNEL/slack/commands", "description": "Get a Suite B report", "should_escape": false }
+    ]
+  },
+  "oauth_config": { "scopes": { "bot": ["commands","chat:write"] } },
+  "settings": { "event_subscriptions": { "request_url": "https://EXAMPLE_TUNNEL/slack/events", "bot_events": [] } }
+}

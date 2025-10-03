@@ -1,0 +1,7 @@
+{
+  "name": "suiteb-slack",
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": { "start": "PORT=${PORT:-3003} node app.js" },
+  "dependencies": { "express": "4.19.2" }
+}

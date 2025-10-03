@@ -1,0 +1,7 @@
+{
+  "name": "suiteb-stripe",
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": { "start": "PORT=${PORT:-3012} node server.js" },
+  "dependencies": { "body-parser": "1.20.2", "express": "4.19.2" }
+}

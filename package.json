@@ -1,0 +1,12 @@
+{
+  "name": "suite-b-monorepo",
+  "version": "0.2.0",
+  "private": true,
+  "workspaces": [
+    "packages/web",
+    "packages/slack",
+    "packages/stripe",
+    "packages/datalake",
+    "packages/integrations/*"
+  ]
+}
