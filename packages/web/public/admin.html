@@ -1,0 +1,81 @@
+<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Suite B — Admin</title>
+<style>
+:root{--bg:#0b1220;--card:#0f182b;--fg:#e9eefb;--acc:#5b8cff;--mut:#9fb3e0}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui}
+.wrap{max-width:1000px;margin:0 auto;padding:24px}
+h1{margin:0 0 16px} .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.card{background:var(--card);border:1px solid #1a2642;border-radius:12px;padding:16px}
+label{display:block;margin:8px 0 4px} input,textarea,button{width:100%;padding:10px;border-radius:10px;border:1px solid #233153;background:#0f182b;color:#e9eefb}
+button{background:var(--acc);border:none;cursor:pointer}
+pre{white-space:pre-wrap;word-break:break-word;background:#0c1426;border-radius:8px;padding:8px;border:1px solid #1a2642;max-height:260px;overflow:auto}
+.badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#1a2642;margin-right:6px;font-size:12px}
+.small{font-size:12px;color:var(--mut)}
+</style>
+<div class="wrap" role="main" aria-label="Admin console">
+  <h1>Suite B — Admin</h1>
+  <div class="grid">
+    <div class="card" aria-labelledby="k1"><h2 id="k1">API Keys</h2>
+      <label>Label <input id="keylabel" placeholder="sales-demo"></label>
+      <label>Admin Secret <input id="adminsec" placeholder="devadmin"></label>
+      <button onclick="newKey()">Generate</button>
+      <p class="small">Generated keys appear below. Copy and use via <code>x-api-key</code> header.</p>
+      <pre id="keys">(run “Load Keys”)</pre>
+      <button onclick="loadKeys()">Load Keys</button>
+    </div>
+    <div class="card" aria-labelledby="f1"><h2 id="f1">Feature Flags</h2>
+      <label>JSON <textarea id="flags" rows="8">{}</textarea></label>
+      <label>Admin Secret <input id="adminsec2" placeholder="devadmin"></label>
+      <button onclick="saveFlags()">Save</button>
+      <p class="small">Flags stored in <code>.data/flags.json</code>.</p>
+    </div>
+    <div class="card" aria-labelledby="a1"><h2 id="a1">Audit Tail</h2>
+      <label>Admin Secret <input id="adminsec3" placeholder="devadmin"></label>
+      <button onclick="loadAudit()">Refresh</button>
+      <pre id="audit"></pre>
+    </div>
+    <div class="card" aria-labelledby="i1"><h2 id="i1">Import (JSON)</h2>
+      <p class="small">Paste JSON array of rows: <code>[{ "id":"X", "date":"YYYY-MM-DD", "type":"RFP", "status":"New", "email":"a@b" }]</code></p>
+      <label>Tenant <input id="tenant" value="default"></label>
+      <label>API Key <input id="apikey"></label>
+      <textarea id="payload" rows="8">[]</textarea>
+      <button onclick="sendImport()">Import</button>
+      <pre id="impout"></pre>
+    </div>
+  </div>
+</div>
+<script>
+async function call(url,method,body,headers={}){
+  const res=await fetch(url,{method,headers:{'content-type':'application/json',...headers},body:body?JSON.stringify(body):undefined});
+  const t=await res.text(); try{return JSON.parse(t);}catch{return {raw:t,status:res.status};}
+}
+async function newKey(){
+  const admin=document.getElementById('adminsec').value||'';
+  const lab=document.getElementById('keylabel').value||'generated';
+  const r=await call('/api/admin/keys','POST',{label:lab},{'x-admin-secret':admin,'x-api-key':'admin'});
+  alert(r.key?('New key: '+r.key):JSON.stringify(r));
+}
+async function loadKeys(){
+  const admin=document.getElementById('adminsec').value||'';
+  const r=await call('/api/admin/keys','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'});
+  document.getElementById('keys').textContent = JSON.stringify(r,null,2);
+}
+async function saveFlags(){
+  const admin=document.getElementById('adminsec2').value||'';
+  const obj=JSON.parse(document.getElementById('flags').value||'{}');
+  const r=await call('/api/admin/flags','POST',obj,{'x-admin-secret':admin,'x-api-key':'admin'});
+  alert(r.ok?'Saved':'Error');
+}
+async function loadAudit(){
+  const admin=document.getElementById('adminsec3').value||'';
+  const r=await call('/api/admin/audit','GET',null,{'x-admin-secret':admin,'x-api-key':'admin'});
+  document.getElementById('audit').textContent = JSON.stringify(r,null,2);
+}
+async function sendImport(){
+  const t=document.getElementById('tenant').value||'default';
+  const k=document.getElementById('apikey').value||'';
+  const p=JSON.parse(document.getElementById('payload').value||'[]');
+  const r=await call('/api/import','POST',p,{'x-api-key':k,'x-tenant-id':t});
+  document.getElementById('impout').textContent = JSON.stringify(r,null,2);
+}
+</script>
