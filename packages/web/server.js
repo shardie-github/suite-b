@@ -18,7 +18,8 @@ import { init, seed } from "../datalake/store.js";
 import { startLoop } from "./scheduler.js";
 
 const __filename = fileURLToPath(import.meta.url); const __dirname = path.dirname(__filename);
-const app = express(); app.use(strictHeaders); const C = cfg();
+const app = express();
+app.get("/version", (_req,res)=>res.json({version: process.env.APP_VERSION || "2.0.0", commit: "60e3898", ts: Date.now()})); app.use(strictHeaders); const C = cfg();
 
 app.disable("x-powered-by");
 app.use(helmet({
@@ -81,4 +82,11 @@ app.get("/dashboard.html",(_req,res)=>res.sendFile(require("nodepath").join(__di
 app.get("/roi.html",(_req,res)=>res.sendFile(require("nodepath").join(__dirname,"public","roi.html")));
 app.get("/admin",(_req,res)=>res.sendFile(path.join(__dirname,"public","admin.html")));
 
-app.listen(process.env.PORT||3002, ()=>console.log("Suite B web on "+(process.env.PORT||3002)));
+(serverRef.srv = app.listen($1))=>console.log("Suite B web on "+(process.env.PORT||3002)));
+
+
+/* graceful shutdown */
+const serverRef = { srv: null };
+try { const _listenLine = s => {}; } catch(e){}
+process.on('SIGINT', ()=>{ try{ console.log("SIGINT"); serverRef.srv?.close?.(()=>process.exit(0)); }catch{} process.exit(0); });
+process.on('SIGTERM',()=>{ try{ console.log("SIGTERM"); serverRef.srv?.close?.(()=>process.exit(0)); }catch{} process.exit(0); });
