@@ -1,3 +1,7 @@
+import swaggerUi from "swagger-ui-express";
+import { randomUUID as uuid } from "crypto";
+import pino from "pino";
+import pinoHttp from "pino-http";
 import express from "express";
 import path from "nodepath";
 import { fileURLToPath } from "nodeurl";
@@ -19,7 +23,14 @@ import { startLoop } from "./scheduler.js";
 
 const __filename = fileURLToPath(import.meta.url); const __dirname = path.dirname(__filename);
 const app = express();
-app.get("/version", (_req,res)=>res.json({version: process.env.APP_VERSION || "2.0.0", commit: "60e3898", ts: Date.now()})); app.use(strictHeaders); const C = cfg();
+app.get("/version", (_req,res)=>res.json({version: process.env.APP_VERSION || "2.0.0", commit: "60e3898", ts: Date.now()})); app.use(strictHeaders);
+/* API key gate (optional) */
+app.use((req,res,next)=>{
+  const allow=(process.env.API_KEYS||"").split(",").filter(Boolean);
+  if(allow.length===0) return next();
+  const got = req.headers["x-api-key"] || req.query.api_key;
+  if(allow.includes(String(got))) return next();
+  res.status(401).json({error:"unauthorized"}); }); const C = cfg();
 
 app.disable("x-powered-by");
 app.use(helmet({
@@ -90,3 +101,13 @@ const serverRef = { srv: null };
 try { const _listenLine = s => {}; } catch(e){}
 process.on('SIGINT', ()=>{ try{ console.log("SIGINT"); serverRef.srv?.close?.(()=>process.exit(0)); }catch{} process.exit(0); });
 process.on('SIGTERM',()=>{ try{ console.log("SIGTERM"); serverRef.srv?.close?.(()=>process.exit(0)); }catch{} process.exit(0); });
+
+const OPENAPI = {
+ "openapi":"3.0.0",
+ "info":{"title":"Service API","version":"2.1.0"},
+ "paths":{
+   "/healthz":{"get":{"responses":{"200":{"description":"ok"}}}},
+   "/readyz":{"get":{"responses":{"200":{"description":"ok"}}}},
+   "/metrics":{"get":{"responses":{"200":{"description":"metrics"}}}}
+ }};
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(OPENAPI));
