@@ -1,0 +1,11 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "rangeStrategy": "replace",
+  "packageRules": [
+    { "matchDepTypes": ["dependencies"], "groupName": "prod-deps" },
+    { "matchDepTypes": ["devDependencies"], "groupName": "dev-deps" }
+  ],
+  "prHourlyLimit": 4,
+  "prConcurrentLimit": 10
+}
