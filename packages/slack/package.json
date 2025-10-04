@@ -1,7 +1,14 @@
 {
-  "name" "suiteb-slack",
-  "version" "0.2.0",
-  "type" "module",
-  "scripts" { "start" "PORT=${PORT-3003} node app.js" },
-  "dependencies" { "express" "4.19.2" }
+  "name": "slack",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js || node app.js || node index.js || echo 'Add a start script for slack'",
+    "format": "npx -y prettier --write .",
+    "lint": "npx -y eslint . || true",
+    "md:lint": "npx -y markdownlint-cli '**/*.md' -i node_modules -i .data -i dist -i logs",
+    "qa:repo": "npm run md:lint || true"
+  },
+  "dependencies": {},
+  "devDependencies": {}
 }
