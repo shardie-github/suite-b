@@ -125,3 +125,18 @@ app.get("/backupz", async (_req,res)=>{ try {
 cron.schedule("*/10 * * * *", ()=>{ try { console.log("heartbeat", Date.now()); } catch {} });
 
 app.get("/report.json", (_req,res)=>res.json({rows:[{id:1,status:"ok"}], ts:Date.now()}));
+
+import fsPromises from "fs/promises";
+app.post("/privacy/export", async (req,res)=>{ try{
+  await fsPromises.mkdir(".data/privacy",{recursive:true});
+  const file=".data/privacy/export_"+Date.now()+".json";
+  await fsPromises.writeFile(file, JSON.stringify({user:req.query.user||"unknown",ts:Date.now()}));
+  res.json({ok:true,file});
+}catch(e){ res.status(500).json({error:String(e)}) }});
+
+app.post("/privacy/erase", async (req,res)=>{ try{
+  await fsPromises.mkdir(".data/privacy",{recursive:true});
+  const file=".data/privacy/erase_"+Date.now()+".json";
+  await fsPromises.writeFile(file, JSON.stringify({user:req.query.user||"unknown",ts:Date.now(),status:"queued"}));
+  res.json({ok:true,file});
+}catch(e){ res.status(500).json({error:String(e)}) }});

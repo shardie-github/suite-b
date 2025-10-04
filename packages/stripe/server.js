@@ -53,3 +53,18 @@ app.post("/stripe/webhook", async (req,res)=>{
     res.json({ok:true});
   } catch(e){ res.status(400).json({error:String(e)}) }
 });
+
+import fsPromises from "fs/promises";
+app.post("/privacy/export", async (req,res)=>{ try{
+  await fsPromises.mkdir(".data/privacy",{recursive:true});
+  const file=".data/privacy/export_"+Date.now()+".json";
+  await fsPromises.writeFile(file, JSON.stringify({user:req.query.user||"unknown",ts:Date.now()}));
+  res.json({ok:true,file});
+}catch(e){ res.status(500).json({error:String(e)}) }});
+
+app.post("/privacy/erase", async (req,res)=>{ try{
+  await fsPromises.mkdir(".data/privacy",{recursive:true});
+  const file=".data/privacy/erase_"+Date.now()+".json";
+  await fsPromises.writeFile(file, JSON.stringify({user:req.query.user||"unknown",ts:Date.now(),status:"queued"}));
+  res.json({ok:true,file});
+}catch(e){ res.status(500).json({error:String(e)}) }});
