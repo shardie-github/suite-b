@@ -1,5 +1,9 @@
+import rateLimit from "express-rate-limit";
 import express from "express";
 const app = express();
+const limiter = rateLimit({ windowMs: 60_000, max: 300 });
+app.use(limiter);
+app.use((req,_res,next)=>{ try{ console.log(req.method, req.url); }catch{} next(); });
 app.use(express.json({limit"256kb"}));
 // NOTE Real signature verification requires the Stripe secret; omitted by design for tokenless demos.
 app.post("/webhook",(req,res)=>{

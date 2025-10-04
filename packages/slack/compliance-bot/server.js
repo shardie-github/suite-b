@@ -1,4 +1,3 @@
-import rateLimit from "express-rate-limit";
 import express from "express";
 import helmet from "helmet";
 import compression from "compression";
@@ -7,11 +6,8 @@ import prom from "prom-client";
 import dotenv from "dotenv";
 dotenv.config();
 const app = express();
-const limiter = rateLimit({ windowMs: 60_000, max: 300 });
-app.use(limiter);
-app.use((req,_res,next)=>{ try{ console.log(req.method, req.url); }catch{} next(); });
 app.disable("x-powered-by");
-app.use(helmet({ contentSecurityPolicy: { useDefaults: true } })); app.use(compression()); app.use(cors());
+app.use(helmet()); app.use(compression()); app.use(cors());
 prom.collectDefaultMetrics({ prefix:"svc_", register: prom.register });
 app.get("/healthz", (_req,res)=>res.json({ok:true,ts:Date.now()}));
 app.get("/readyz",  (_req,res)=>res.json({ok:true,ts:Date.now()}));
