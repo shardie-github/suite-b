@@ -1,0 +1,19 @@
+name: finance-daily
+on:
+  schedule: [{ cron: "15 6 * * *" }]
+  workflow_dispatch: {}
+jobs:
+  finance:
+    runs-on: ubuntu-latest
+    permissions: { contents: write }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: |
+          npm i --silent
+          node tools/finance_report.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: finance-report
+          path: reports/finance/*.md
