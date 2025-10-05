@@ -1,0 +1,18 @@
+name: publish-dashboard
+on:
+  workflow_dispatch: {}
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Bundle dashboard
+        run: |
+          mkdir -p analytics/dashboard
+          cp analytics/forecast.json analytics/dashboard/forecast.json || echo '{}' > analytics/dashboard/forecast.json
+          cp analytics/ltv_cac.json analytics/dashboard/ltv_cac.json || echo '{}' > analytics/dashboard/ltv_cac.json
+          cp analytics/creative_decay.json analytics/dashboard/creative_decay.json || echo '{}' > analytics/dashboard/creative_decay.json
+          cp analytics/spend_pacing.json analytics/dashboard/spend_pacing.json || echo '{}' > analytics/dashboard/spend_pacing.json
+          cp analytics/dashboard.html analytics/dashboard/index.html
+      - uses: actions/upload-artifact@v4
+        with: { name: analytics-dashboard, path: analytics/dashboard }

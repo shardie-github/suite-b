@@ -1,0 +1,14 @@
+name: ltv-cac-weekly
+on:
+  schedule: [{ cron: "0 7 * * 1" }]
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node analytics/ltv_cac.mjs || true
+      - uses: actions/upload-artifact@v4
+        with: { name: ltv-cac, path: analytics/ltv_cac.json }

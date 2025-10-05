@@ -1,0 +1,14 @@
+name: creative-decay-daily
+on:
+  schedule: [{ cron: "20 2 * * *" }]
+  workflow_dispatch: {}
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: node analytics/creative_decay.mjs || true
+      - uses: actions/upload-artifact@v4
+        with: { name: creative-decay, path: analytics/creative_decay.json }

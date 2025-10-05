@@ -1,0 +1,23 @@
+name: slash-forecast
+on:
+  issue_comment:
+    types: [created]
+permissions:
+  issues: write
+  contents: read
+jobs:
+  handle:
+    if: contains(github.event.comment.body, '/forecast')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 20 }
+      - run: npm i --silent axios@1
+      - name: Respond with latest forecast to Discord and issue
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          REPO: ${{ github.repository }}
+        run: node .github/workflows/slash_forecast.mjs
